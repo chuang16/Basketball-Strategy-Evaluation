@@ -1,0 +1,108 @@
+---
+title: "Final Project"
+author: "Raashi Dewan, Corey Huang, Lauren Manning, Grace Stewart, Armando Taveras"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    number_sections: yes    
+    toc: yes
+---
+```{r message=TRUE, warning=TRUE, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+library(gganimate)
+library(gifski)
+library(png)
+library(ggrepel)
+library(scales)
+library(gapminder)
+# library(shinyWidgets)
+library(data.table)
+```
+
+# Reading CSV File
+Below we read in the .csv file titled "cbb.csv". This file contains basketball statistics for different college teams among different conferences from 2013 to 2019. We have chosen to exclude data from 2020, as that season was cut short and does not include post-season statistics due to the COVID-19 pandemic. We also chose to exclude 2021 data, as the season is still in progress and thus the dataset is not completed yet. 
+```{r}
+bball <- read.csv(file = "cbb.csv")
+head(bball)
+```
+
+# Cleaning the Data
+In order to increase efficiency and data cleanliness, we removed all columns that were not relevant to the questions that we would like to focus on (which are detailed below).
+```{r}
+bball = bball %>% select("TEAM" | "CONF" | "ADJOE" | "ADJDE" | "W" | "G" | "X3P_D" | "X3P_O" | "YEAR")
+head(bball)
+```
+
+# What type of relationship exists between three point shot percentages and win percentages?
+In order to examine at the question above, we first looked at each team's three point percentage versus their win percentage per year in order to get a visualization or whether there is a relationship between the two. From the results below, you can see that there does appear to be a bit of a positive relationship between the two factors.
+```{r}
+x <- c(2013, 2014, 2015, 2016, 2017, 2018, 2019)
+y <- c(1:nrow(bball))
+par(mfrow=c(2,4))
+for (yr in x) 
+{
+  three_point_percentage = c(NA)
+  wins = c(NA)
+  for (i in y)
+  {
+    if(bball[i,'YEAR'] == yr )
+    {
+      newTP <- bball[i,'X3P_O']
+      newW <- bball[i,'W'] / bball[i,'G'] 
+      three_point_percentage <- c(three_point_percentage, newTP)
+      wins <- c(wins, newW)
+    } 
+  }
+  plot(three_point_percentage,wins, xlim=c(20,50),ylim=c(0,1),lty=1, ylab="win percentage", main = paste("Year = ", yr))
+}
+```
+
+# Question 1 - Continued
+Wanting to look at this question from another angle, we then examined two graphs side-by-side : win percentages by conference and three point percentages by conference. By cross referencing these, you can make the same observation as we did in the section above - that there is a positive relationship between three point percentages and win percentages.
+```{r}
+par(mfrow=c(1,2))
+boxplot(W/G ~ CONF, bball, las = 2, cex.axis = 0.5)
+boxplot(X3P_O ~ CONF, bball, las = 2, cex.axis = 0.5)
+```
+
+# Does offensive efficiency or defensive efficiency better correlate to higher winning percentages?
+In order to examine this question, we graphed adjusted offensive efficiency versus wins percentage in blue, and adjusted defensive efficiency versus wins percentage in red, all per year. We overlapped these graphs in order to best show the very interesting relationship seen below. While a higher offensive efficiency clearly results in a higher winning percentage, a higher defensive efficiency results in a lower winning percentage. As a result, one would say that a higher offensive efficiency better correlates to a higher winning percentage. 
+```{r}
+x <- c(2013, 2014, 2015, 2016, 2017, 2018, 2019)
+y <- c(1:nrow(bball))
+par(mfrow=c(2,4))
+for (yr in x) 
+{
+  offensive = c(NA)
+  wins = c(NA)
+  defensive = c(NA)
+  for (i in y)
+  {
+    if(bball[i,'YEAR'] == yr )
+    {
+      newO <- bball[i,'ADJOE']
+      newD <- bball[i, 'ADJDE']
+      newW <- bball[i,'W'] / bball[i,'G']
+      offensive <- c(offensive, newO)
+      defensive <- c(defensive, newD)
+      wins <- c(wins, newW)
+    } 
+  }
+  plot(offensive,wins, xlim=c(70,140),ylim=c(0,1),lty=1, col='blue',ylab="win percentage", xlab="offensive(blue) // defensive(red)",main = paste("Year = ", yr))
+  points(defensive,wins, xlim=c(70,140),ylim=c(0,1),lty=1, col='red')
+}
+```
+
+# Conclusions
+
+In order to evaluate what strategies would be most effective for basketball teams to have a higher probability to win, we analyzed different relationships between statistics found in the CSV file and win percentages. These statistics are retrieved from the datasets of 355 college basketball teams from the 2013 to 2019 seasons.
+
+First, we explored the relationship between the three-point shot percentage and win percentage for each team. Looking at the scatter plots for three-point percentage vs win percentage of all teams each year, you can see the overall shape of the graph going slightly in a positive direction. Comparing the boxplots of win percentages by conference with three-point percentages by conference, it is also possible to see a positive correlation by just looking at the medians: most conferences that have a higher median for three-point percentages also have a higher median for win percentages. From these observations, we can conclude that there is a slight but confident positive relationship between three-point percentages and win percentages.
+
+The second relationship we analyzed was which efficiency would be a better correlation to a higher win percentage: offense or defense? Surprisingly, in the scatter plots for each year, we found that while having a better offense (blue) does have a positive relationship with win percentage, having a better defense (red) actually has a negative relationship. This is clearly evident since in the graph the shape of the offensive efficiency vs win percentage goes in a positive direction while the shape of the defensive efficiency vs win percentage goes in a negative direction.
+
+Based on the data we analyzed, we can first rule out the strategy of having a better defensive efficiency since not only is it ineffective with helping teams win, it decreases the win percentage as well. Although the relationships of three-point percentages vs win percentages and offensive efficiency vs win percentages are both positive, having a better offense has a more effective result. In conclusion, employing a strategy of having a higher three-point percentage and/or offensive efficiency would be more effective for a basketball team to have a higher win percentage, with a better offense being the most effective.
